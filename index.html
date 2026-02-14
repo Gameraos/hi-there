@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Valentine?</title>
+  <style>
+    :root{
+      --bg1:#ffd6e8;
+      --bg2:#ff8fb1;
+      --card: rgba(255,255,255,.92);
+      --shadow: 0 24px 80px rgba(0,0,0,.16);
+    }
+    *{ box-sizing: border-box; }
+
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(900px 500px at 20% 10%, rgba(255,255,255,.75), transparent 60%),
+        radial-gradient(900px 500px at 80% 20%, rgba(255,255,255,.55), transparent 60%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      display:grid;
+      place-items:center;
+      padding: clamp(14px, 2.2vw, 26px);
+      overflow:hidden; /* no page scrollbar; overflow clips content */ /* [web:195] */
+    }
+
+    .card{
+      width:min(960px, 96vw);
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,.65);
+      border-radius: 28px;
+      padding: clamp(16px, 2.6vw, 30px);
+      box-shadow: var(--shadow);
+      text-align:center;
+      position:relative;
+      backdrop-filter: blur(8px);
+    }
+
+    .badge{
+      display:inline-flex;
+      gap:10px;
+      align-items:center;
+      justify-content:center;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.75);
+      border: 1px solid rgba(0,0,0,.06);
+      margin-bottom: 14px;
+      font-weight:800;
+      font-size: 14px;
+    }
+
+    h1{
+      margin: 6px 0 10px;
+      font-size: clamp(28px, 3.6vw, 46px);
+      line-height: 1.05;
+    }
+    p{
+      margin: 0 auto 14px;
+      max-width: 64ch;
+      font-size: clamp(15px, 1.3vw, 18px);
+      opacity: .86;
+      min-height: 24px;
+    }
+
+    /* GIF area (normal, before video) */
+    .gifRow{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      margin: 10px 0 10px;
+    }
+    .gifBox{
+      width: min(220px, 60vw);
+      height: auto;
+      border-radius: 18px;
+      background: rgba(255,255,255,.6);
+      border: 1px solid rgba(0,0,0,.06);
+      box-shadow: 0 12px 30px rgba(0,0,0,.10);
+      padding: 8px;
+    }
+
+    /* When we need final GIF + video together: overlay GIF so video isn't clipped */
+    .gifOverlayWrap.overlay{
+      position: fixed; /* stays in viewport */ /* [web:240] */
+      right: 18px;
+      bottom: 18px;
+      z-index: 9998;
+    }
+    .gifOverlayWrap.overlay .gifBox{
+      width: 140px;
+      padding: 6px;
+    }
+
+    /* Buttons */
+    .btns{
+      display:flex;
+      flex-direction: column;
+      align-items:center;
+      gap: 16px;
+      margin-top: 12px;
+    }
+    button{
+      border:0;
+      border-radius: 999px;
+      padding: 14px 22px;
+      font-weight: 900;
+      cursor:pointer;
+      user-select:none;
+      font-size: clamp(16px, 1.3vw, 18px);
+      min-width: min(580px, 88vw);
+      min-height: 54px;
+      letter-spacing:.2px;
+      box-shadow: 0 12px 26px rgba(0,0,0,.12);
+      transition: filter .18s ease, transform .12s ease;
+    }
+    button:hover{ filter: brightness(1.03); }
+    button:active{ transform: translateY(1px); }
+
+    #yesBtn{
+      background: linear-gradient(135deg, #34d399, #22c55e);
+      color: #06230f;
+    }
+    #noBtn{
+      background: linear-gradient(135deg, #fb7185, #ef4444);
+      color: #2b0606;
+    }
+    #noBtn.runaway{
+      position: fixed;
+      z-index: 9999;
+      min-width: 260px;
+    }
+
+    .hidden{ display:none !important; }
+
+    /* Video */
+    .videoWrap{ display:flex; justify-content:center; margin-top: 12px; }
+    video{
+      width: min(820px, 92vw);
+      border-radius: 22px;
+      border: 1px solid rgba(0,0,0,.08);
+      box-shadow: 0 18px 50px rgba(0,0,0,.18);
+      background: #000;
+
+      /* VIDEO RATIO: edit this */
+      aspect-ratio: 16 / 9; /* change to 9/16, 4/3, etc. */ /* [web:213] */
+
+      /* Fit behavior */
+      object-fit: contain;
+
+      /* Keep it inside screen height */
+      max-height: 52vh;
+    }
+
+    .smallNote{ margin: 10px 0 4px; font-size: 13px; opacity:.65; }
+
+    /* Floating hearts */
+    .float-layer{ position: fixed; inset: 0; pointer-events: none; overflow:hidden; }
+    .float{
+      position:absolute; bottom:-40px;
+      font-size: 28px; opacity: .9;
+      animation: rise linear forwards;
+      filter: drop-shadow(0 10px 16px rgba(0,0,0,.12));
+    }
+    @keyframes rise{
+      from { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+      10% { opacity: .95; }
+      to   { transform: translateY(-120vh) translateX(var(--drift)) rotate(var(--rot)); opacity: 0; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="float-layer" id="floatLayer" aria-hidden="true"></div>
+
+  <div class="card">
+    <div class="badge">💌 Valentine Mode • Activated ✨</div>
+    <h1>Will you be my Valentine? 💖</h1>
+    <p id="subtitle">Press “No”… if you really want to 😌</p>
+
+    <!-- GIF stage -->
+    <div class="gifRow" id="gifStage">
+      <div class="gifOverlayWrap" id="gifOverlayWrap">
+        <img id="gifSticker" class="gifBox" src="gif1.gif" alt="Cute valentine gif" />
+      </div>
+    </div>
+
+    <!-- Stage 1: Buttons -->
+    <div class="btns" id="buttonStage">
+      <button id="yesBtn" aria-disabled="true" title="Locked for now 😏">Yes 🥰</button>
+      <button id="noBtn">No 🙈</button>
+    </div>
+
+    <!-- Stage 2: Video 1 + YES -->
+    <div id="video1Stage" class="hidden">
+      <p id="video1Text">Wait… one last thing 👀🌹</p>
+      <div class="videoWrap">
+        <video id="videoGiveRose" playsinline controls preload="auto">
+          <source src="give_rose.mp4" type="video/mp4" />
+        </video>
+      </div>
+      <div class="btns" style="margin-top:16px;">
+        <button id="finalYesBtn">Yes 💖</button>
+      </div>
+      <div class="smallNote">If it doesn’t auto-play, press Play once.</div>
+    </div>
+
+    <!-- Stage 3: Video 2 -->
+    <div id="video2Stage" class="hidden">
+      <p id="video2Text">Awww… I knew it 🥰🌹</p>
+      <div class="videoWrap">
+        <video id="videoAcceptRose" playsinline controls preload="auto">
+          <source src="accept_rose.mp4" type="video/mp4" />
+        </video>
+      </div>
+      <div class="smallNote">Happy Valentine’s Day 💘</div>
+    </div>
+
+    <div class="smallNote" id="hint">Tip: keep pressing “No” 😏</div>
+  </div>
+
+  <script>
+    // GIF rotation BEFORE video
+    const gifs = ["gif1.gif", "gif2.gif", "gif3.gif", "gif4.gif", "gif5.gif"];
+    const yesStickerGif = "yes-sticker.gif";
+
+    const gifStage = document.getElementById("gifStage");
+    const gifSticker = document.getElementById("gifSticker");
+    const gifOverlayWrap = document.getElementById("gifOverlayWrap");
+
+    // Change GIF every 2 or 3 "No" presses
+    let nextGifChangeAt = 2;
+    function scheduleNextGifChange(){
+      nextGifChangeAt += (Math.random() < 0.5 ? 2 : 3);
+    }
+    function changeGif(){
+      gifSticker.src = gifs[Math.floor(Math.random() * gifs.length)]; // [web:123]
+    }
+
+    // FINAL LINES
+    const earlyNoLines = [
+      "No 🙈",
+      "Are you sure? 🥺",
+      "Think again 😏",
+      "Don’t do this to me 😭💗",
+      "I’m still waiting… 🤲",
+      "Sof… that’s suspicious 👀"
+    ];
+    const runawayLines = [
+      "Catch me first 😭💨",
+      "No button said: BYE 🏃",
+      "You can’t escape destiny 😌💞",
+      "Stop pressing NO 😭",
+      "Still no?? My heart can’t take it 💔",
+      "Sof.exe has stopped responding 🤖💘",
+      "Press YES soon… please 🥺✨"
+    ];
+
+    const startRunawayAfter = 6;
+    const disappearAfter = 18;
+
+    const yesBtn = document.getElementById("yesBtn");
+    const noBtn  = document.getElementById("noBtn");
+    const subtitle = document.getElementById("subtitle");
+    const hint = document.getElementById("hint");
+
+    const buttonStage = document.getElementById("buttonStage");
+    const video1Stage = document.getElementById("video1Stage");
+    const video2Stage = document.getElementById("video2Stage");
+
+    const videoGiveRose = document.getElementById("videoGiveRose");
+    const videoAcceptRose = document.getElementById("videoAcceptRose");
+    const finalYesBtn = document.getElementById("finalYesBtn");
+
+    const floatLayer = document.getElementById("floatLayer");
+
+    let noCount = 0;
+
+    // Safe area for runaway NO (PC)
+    let lastPos = { x: null, y: null };
+
+    yesBtn.addEventListener("click", () => {
+      subtitle.textContent = "Nice try 😏 Keep going…";
+      popFloats(4);
+    });
+
+    noBtn.addEventListener("click", async () => {
+      noCount++;
+
+      // Update NO line
+      if (noCount <= earlyNoLines.length) {
+        noBtn.textContent = earlyNoLines[noCount - 1];
+        subtitle.textContent = "Okay… okay… keep going 😏";
+      } else {
+        const idx = (noCount - earlyNoLines.length - 1) % runawayLines.length;
+        noBtn.textContent = runawayLines[idx];
+        subtitle.textContent = "Hehe… now try catching the NO button 😭💨";
+      }
+
+      // Rotate GIFs while still before video stage
+      if (noCount === nextGifChangeAt) {
+        changeGif();
+        scheduleNextGifChange();
+      }
+
+      popFloats(6);
+
+      // Start moving
+      if (noCount >= startRunawayAfter) {
+        noBtn.classList.add("runaway");
+        moveNoInSafeAreaPC();
+      }
+
+      // End: remove BOTH buttons, hide GIF stage, show video 1 + new YES
+      if (noCount >= disappearAfter) {
+        buttonStage.classList.add("hidden");
+        hint.classList.add("hidden");
+
+        gifStage.classList.add("hidden");            // GIF disappears when video 1 appears
+        gifOverlayWrap.classList.remove("overlay");  // reset overlay mode
+
+        subtitle.textContent = "Okay okay… watch this 👀🌹";
+        video1Stage.classList.remove("hidden");
+
+        try { await videoGiveRose.play(); } catch (e) {}
+        popFloats(16);
+      }
+    });
+
+    finalYesBtn.addEventListener("click", async () => {
+      // Final GIF returns as a CORNER overlay so the full video is still visible
+      gifStage.classList.remove("hidden");
+      gifSticker.src = yesStickerGif;               // [web:123]
+      gifOverlayWrap.classList.add("overlay");
+
+      video1Stage.classList.add("hidden");
+      video2Stage.classList.remove("hidden");
+      subtitle.textContent = "YAYYY!! 💖";
+
+      try { await videoAcceptRose.play(); } catch (e) {}
+      popFloats(22);
+    });
+
+    function moveNoInSafeAreaPC(){
+      const rect = noBtn.getBoundingClientRect();
+
+      const marginX = Math.floor(window.innerWidth * 0.12);
+      const marginY = Math.floor(window.innerHeight * 0.14);
+
+      const minX = marginX;
+      const maxX = Math.max(marginX, window.innerWidth - rect.width - marginX);
+      const minY = marginY;
+      const maxY = Math.max(marginY, window.innerHeight - rect.height - marginY);
+
+      if (lastPos.x === null) {
+        applyPos(randInt(minX, maxX), randInt(minY, maxY));
+        return;
+      }
+
+      const maxDx = 140, maxDy = 220;
+      let tries = 0, x, y;
+      do {
+        x = clamp(lastPos.x + randInt(-maxDx, maxDx), minX, maxX);
+        y = clamp(lastPos.y + randInt(-maxDy, maxDy), minY, maxY);
+        if (Math.hypot(x - lastPos.x, y - lastPos.y) >= 90) break;
+        tries++;
+      } while (tries < 25);
+
+      applyPos(x, y);
+    }
+
+    function applyPos(x, y){
+      lastPos = { x, y };
+      noBtn.style.left = x + "px";
+      noBtn.style.top  = y + "px";
+    }
+    function clamp(v, min, max){ return Math.min(max, Math.max(min, v)); }
+    function randInt(min, max){ return Math.floor(min + Math.random() * (max - min + 1)); }
+
+    // Floating hearts
+    const emojis = ["💖","💘","💝","💗","❤️","😍","🥰","✨","🌹","🫶","🎀"];
+    function popFloats(count){
+      for (let i = 0; i < count; i++){
+        const el = document.createElement("div");
+        el.className = "float";
+        el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        el.style.left = Math.random() * 100 + "vw";
+        el.style.setProperty("--drift", (Math.random() * 110 - 55) + "px");
+        el.style.setProperty("--rot", (Math.random() * 70 - 35) + "deg");
+        el.style.animationDuration = (Math.random() * 1.2 + 2.2) + "s";
+        el.style.animationDelay = (Math.random() * 0.15) + "s";
+        floatLayer.appendChild(el);
+        el.addEventListener("animationend", () => el.remove());
+      }
+    }
+    popFloats(10);
+    setInterval(() => popFloats(2), 950);
+
+    window.addEventListener("resize", () => {
+      if (noCount >= startRunawayAfter && noBtn.style.display !== "none") moveNoInSafeAreaPC();
+    });
+  </script>
+</body>
+</html>
